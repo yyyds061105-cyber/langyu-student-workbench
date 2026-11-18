@@ -346,7 +346,7 @@ function renderLogin(){
     <div class="login-card">
       <div class="login-logo">✦</div>
       <h1 class="login-title">浪屿学生组织工作台</h1>
-      <p class="login-sub">部门协同 · 任务管理 · 智能排班</p><div style="margin:14px 0;padding:11px 13px;border:1px solid #fde68a;border-radius:10px;background:#fffbeb;color:#92400e;font-size:12px">公开演示版：演示账号仅供体验，数据保存在当前浏览器。本版本未接入真实身份认证、云端数据或 AI 服务，请勿输入真实个人信息。</div>
+      <p class="login-sub">部门协同 · 任务管理 · 智能排班</p><div style="margin:14px 0;padding:11px 13px;border:1px solid #fde68a;border-radius:10px;background:#fffbeb;color:#92400e;font-size:12px">公开演示版：账号仅供体验，数据仅保存在当前浏览器。AI 服务需完成后端配置后才能使用，请勿输入真实个人信息。</div>
       <div class="field"><label>账号</label><input id="lgUser" placeholder="请输入账号"></div>
       <div class="field"><label>密码</label><input id="lgPass" type="password" placeholder="请输入密码"></div>
       <button class="btn primary block" onclick="doLogin()">登 录</button>
@@ -1250,8 +1250,9 @@ async function sendToAI() {
   const input = document.getElementById('ai-input');
   const text = input.value.trim();
   if (!text) return;
+  if (text.length > 4000) { showToast('单次输入请控制在 4000 字以内'); return; }
   input.value = '';
-  appendMsg(text, true);
+  appendMsg(esc(text), true);
 
   const body = document.getElementById('ai-chat-body');
   const loadingDiv = document.createElement('div');
@@ -1262,101 +1263,114 @@ async function sendToAI() {
   body.scrollTop = body.scrollHeight;
 
   try {
-    // 调用真实 API
     const aiResult = await callRealAPI(text);
-    
-    document.getElementById('ai-loading').remove();
+    const loading = document.getElementById('ai-loading');
+    if (loading) loading.remove();
+    const data = aiResult.data || {};
 
-    // ================= 核心分发逻辑 =================
     if (aiResult.action === 'create_task') {
-      DB.tasks.unshift({
-        id: uid(), title: aiResult.data.title, desc: aiResult.data.desc || '由 AI 创建',
-        assignee: aiResult.data.assignee, dept: SESSION.dept, 
-        deadline: aiResult.data.deadline, priority: aiResult.data.priority || '中',
-        status: '待办', progress: 0, createdBy: SESSION.name
+      const draft = {
+        title: String(data.title || '未命名任务'),
+        desc: String(data.desc || '由 AI 草拟'),
+        assignee: String(data.assignee || ''),
+        deadline: String(data.deadline || ''),
+        priority: ['高', '中', '低'].includes(data.priority) ? data.priority : '中'
+      };
+      showModal({
+        title: '确认创建任务', okText: '确认创建',
+        body: `<p>请核对 AI 草拟内容后再保存：</p><p><b>任务：</b>${esc(draft.title)}</p><p><b>负责人：</b>${esc(draft.assignee || '未填写')}</p><p><b>截止日期：</b>${esc(draft.deadline || '未填写')}</p><p><b>优先级：</b>${esc(draft.priority)}</p><p>${esc(draft.desc)}</p>`,
+        onOk: () => {
+          DB.tasks.unshift({ id:uid(), title:draft.title, desc:draft.desc, assignee:draft.assignee, dept:SESSION.dept, deadline:draft.deadline, priority:draft.priority, status:'待办', progress:0, createdBy:SESSION.name });
+          save(); appendMsg(`✅ 已创建任务【${esc(draft.title)}】。`, false);
+          if (CURRENT === 'tasks' || CURRENT === 'dashboard') renderApp();
+        }
       });
-      save();
-      appendMsg(`✅ 已为您创建任务【${aiResult.data.title}】，指派给 ${aiResult.data.assignee}。`, false);
-      if (CURRENT === 'tasks' || CURRENT === 'dashboard') renderApp();
+      appendMsg('我已准备好任务草稿，请核对后确认保存。', false);
 
     } else if (aiResult.action === 'query_supply') {
-      const itemName = aiResult.data.item_name;
+      const itemName = String(data.item_name || '');
       const items = DB.supplies.filter(s => s.name.includes(itemName));
-      if (items.length > 0) {
-        let reply = `📦 查到了相关物资：<br>`;
-        items.forEach(i => {
-          reply += `• <b>${i.name}</b>：可用 ${i.available} ${i.unit}。<br>`;
-        });
+      if (items.length) {
+        const reply = items.map(i => `📦 <b>${esc(i.name)}</b>：可用 ${esc(i.available)} ${esc(i.unit)}。`).join('<br>');
         appendMsg(reply, false);
-      } else {
-        appendMsg(`📦 抱歉，没找到包含“${itemName}”的物资。`, false);
-      }
+      } else appendMsg(`📦 抱歉，没找到包含“${esc(itemName)}”的物资。`, false);
 
     } else if (aiResult.action === 'score_member') {
-      DB.scores.unshift({
-        id: uid(), target: aiResult.data.target, dept: SESSION.dept,
-        month: new Date().toISOString().slice(0, 7),
-        attitude: aiResult.data.attitude || 85, execution: aiResult.data.execution || 85,
-        teamwork: aiResult.data.teamwork || 85, innovation: aiResult.data.innovation || 85,
-        discipline: aiResult.data.discipline || 85,
-        comment: aiResult.data.comment || 'AI 自动生成', scorer: SESSION.name, time: nowStr()
+      const draft = {
+        target: String(data.target || '未填写'),
+        attitude: Number(data.attitude) || 60,
+        execution: Number(data.execution) || 60,
+        teamwork: Number(data.teamwork) || 60,
+        innovation: Number(data.innovation) || 60,
+        discipline: Number(data.discipline) || 60,
+        comment: String(data.comment || '待补充')
+      };
+      showModal({
+        title: '核对评分草稿', okText: '确认保存草稿', wide: true,
+        body: `<p><b>这只是 AI 草稿，不是正式考核结果。请核对事实与分数后再保存。</b></p><p>成员：${esc(draft.target)}</p><p>态度 ${esc(draft.attitude)} · 执行 ${esc(draft.execution)} · 协作 ${esc(draft.teamwork)} · 创新 ${esc(draft.innovation)} · 纪律 ${esc(draft.discipline)}</p><p>${esc(draft.comment)}</p>`,
+        onOk: () => {
+          DB.scores.unshift({ id:uid(), target:draft.target, dept:SESSION.dept, month:new Date().toISOString().slice(0,7), attitude:draft.attitude, execution:draft.execution, teamwork:draft.teamwork, innovation:draft.innovation, discipline:draft.discipline, comment:draft.comment, scorer:SESSION.name, time:nowStr() });
+          save(); appendMsg(`📝 已保存 ${esc(draft.target)} 的评分草稿，请按实际情况复核。`, false);
+          if (CURRENT === 'tasks') renderApp();
+        }
       });
-      save();
-      appendMsg(`📝 已为 ${aiResult.data.target} 生成初步评分。`, false);
-      if (CURRENT === 'tasks') renderApp();
+      appendMsg('我已准备好评分草稿，请人工核对后再保存。', false);
 
-    } 
-    // 👇 新增逻辑 1：查询知识库
-    else if (aiResult.action === 'query_knowledge') {
-      const keyword = aiResult.data.keyword.toLowerCase();
-      const docs = DB.knowledge.filter(k => 
-        k.title.toLowerCase().includes(keyword) || 
-        k.content.toLowerCase().includes(keyword) ||
-        k.category.toLowerCase().includes(keyword)
-      );
-      
-      if (docs.length > 0) {
-        let reply = `📚 为您在知识库找到以下相关内容：<br>`;
+    } else if (aiResult.action === 'query_knowledge') {
+      const keyword = String(data.keyword || '').toLowerCase();
+      const docs = DB.knowledge.filter(k => k.title.toLowerCase().includes(keyword) || k.content.toLowerCase().includes(keyword) || k.category.toLowerCase().includes(keyword));
+      if (docs.length) {
+        let reply = '📚 为您在知识库找到以下相关内容：<br>';
         docs.slice(0, 3).forEach((doc, index) => {
-          reply += `<b>${index + 1}. ${doc.title}</b> [${doc.category}]<br>`;
+          reply += `<b>${index + 1}. ${esc(doc.title)}</b> [${esc(doc.category)}]<br>`;
           const snippet = doc.content.length > 50 ? doc.content.slice(0, 50) + '...' : doc.content;
-          reply += `<span style="color:var(--muted);font-size:12px">${snippet}</span><br><br>`;
+          reply += `<span style="color:var(--muted);font-size:12px">${esc(snippet)}</span><br><br>`;
         });
-        if (docs.length > 3) reply += `（还有更多结果，请前往知识库查看）`;
         appendMsg(reply, false);
-      } else {
-        appendMsg(`📚 抱歉，知识库里暂时没有关于“${aiResult.data.keyword}”的内容。`, false);
-      }
-    }
-    // 👇 新增逻辑 2：写入知识库
-    else if (aiResult.action === 'add_knowledge') {
-      DB.knowledge.unshift({
-        id: uid(),
-        title: aiResult.data.title,
-        category: aiResult.data.category || '其他',
-        content: aiResult.data.content,
-        author: SESSION.name,
-        time: nowStr().slice(0, 10)
-      });
-      save();
-      appendMsg(`📚 已将新知识【${aiResult.data.title}】成功存入知识库！`, false);
-      if (CURRENT === 'knowledge') renderApp();
-    }
-    
-    else {
-      // 兜底聊天
-      appendMsg(aiResult.data.reply || '我不太明白你的意思。', false);
-    }
+      } else appendMsg(`📚 抱歉，知识库里暂时没有关于“${esc(keyword)}”的内容。`, false);
 
+    } else if (aiResult.action === 'add_knowledge') {
+      const draft = { title:String(data.title || '未命名'), category:['模板','流程','技能','其他'].includes(data.category) ? data.category : '其他', content:String(data.content || '') };
+      showModal({
+        title: '确认写入知识库', okText: '确认保存', wide: true,
+        body: `<p>请核对 AI 草拟内容后再保存：</p><p><b>${esc(draft.title)}</b> [${esc(draft.category)}]</p><div style="white-space:pre-wrap">${esc(draft.content)}</div>`,
+        onOk: () => {
+          DB.knowledge.unshift({ id:uid(), title:draft.title, category:draft.category, content:draft.content, author:SESSION.name, time:nowStr().slice(0,10) });
+          save(); appendMsg(`📚 已将【${esc(draft.title)}】保存到本机演示数据。`, false);
+          if (CURRENT === 'knowledge') renderApp();
+        }
+      });
+      appendMsg('我已准备好知识库草稿，请核对后确认保存。', false);
+
+    } else {
+      appendMsg(esc(String(data.reply || '我不太明白你的意思。')).replace(/\n/g, '<br>'), false);
+    }
   } catch (error) {
-    document.getElementById('ai-loading').remove();
-    appendMsg('公开演示版尚未配置安全的 AI 后端，智能助手暂不可用；其余本地演示功能可继续体验。', false);
-    console.error(error);
+    const loading = document.getElementById('ai-loading');
+    if (loading) loading.remove();
+    const message = error?.message === 'AI_ENDPOINT_NOT_CONFIGURED'
+      ? 'AI 后端还没有配置完成，请按仓库 README 部署 Worker 并设置接口地址。'
+      : 'AI 服务暂时不可用，请稍后再试。';
+    appendMsg(esc(message), false);
+    console.error('AI request failed:', error);
   }
 }
 
+const AI_API_URL = '';
+
 async function callRealAPI(userText) {
-  throw new Error("公开演示版暂未配置安全的 AI 后端。");
+  if (!AI_API_URL) throw new Error('AI_ENDPOINT_NOT_CONFIGURED');
+  const response = await fetch(AI_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: userText })
+  });
+  if (!response.ok) throw new Error('AI_BACKEND_REQUEST_FAILED');
+  const result = await response.json();
+  if (!result || typeof result.action !== 'string' || !result.data || typeof result.data !== 'object') {
+    throw new Error('AI_BACKEND_RESPONSE_INVALID');
+  }
+  return result;
 }
 
 /* ================= 启动 ================= */(function init(){

@@ -1,0 +1,10 @@
+name = "langyu-student-workbench-ai"
+main = "src/index.js"
+compatibility_date = "2026-11-18"
+workers_dev = true
+
+[vars]
+# Set these in the Cloudflare Worker dashboard. Match BASE_URL to the Kimi API key's region.
+KIMI_API_BASE_URL = "https://api.moonshot.cn/v1"
+KIMI_MODEL = "kimi-k3"
+ALLOWED_ORIGIN = "https://yyyds061105-cyber.github.io"
