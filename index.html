@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>浪屿学生组织工作台</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#4f46e5;--primary-dark:#4338ca;--primary-light:#eef2ff;
+  --bg:#f4f5fb;--card:#fff;--text:#111827;--muted:#6b7280;--border:#e6e8f0;
+  --success:#10b981;--warn:#f59e0b;--danger:#ef4444;--radius:14px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+h1,h2,h3{line-height:1.3}
+h2{font-size:19px}h3{font-size:15.5px}
+
+/* 登录 */
+.login-wrap{min-height:100vh;display:grid;place-items:center;padding:20px;background:radial-gradient(circle at 20% 20%,#6366f1,transparent 45%),radial-gradient(circle at 80% 70%,#0ea5e9,transparent 45%),linear-gradient(135deg,#1e1b4b,#312e81 55%,#4f46e5)}
+.login-card{width:100%;max-width:420px;background:#fff;border-radius:22px;padding:38px 34px;box-shadow:0 30px 70px rgba(0,0,0,.35)}
+.login-logo{width:56px;height:56px;border-radius:16px;display:grid;place-items:center;font-size:26px;color:#fff;background:linear-gradient(135deg,#6366f1,#8b5cf6);margin-bottom:18px;box-shadow:0 10px 22px rgba(99,102,241,.45)}
+.login-title{font-size:21px;margin-bottom:6px}
+.login-sub{color:var(--muted);font-size:13px;margin-bottom:26px}
+.login-hint{margin-top:22px;padding-top:18px;border-top:1px dashed var(--border);font-size:12.5px;color:var(--muted)}
+.demo-rows{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.demo{border:1px solid var(--border);background:#fafbff;border-radius:10px;padding:9px 12px;text-align:left;cursor:pointer;font-size:13px;font-family:inherit;color:#374151;transition:.15s}
+.demo:hover{border-color:#c7d2fe;background:var(--primary-light)}
+
+/* 布局 */
+.layout{display:flex;min-height:100vh}
+.sidebar{width:238px;flex-shrink:0;background:linear-gradient(180deg,#1e1b4b,#312e81 55%,#4338ca);color:#c7d2fe;padding:20px 14px;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.brand{display:flex;align-items:center;gap:11px;padding:6px 10px 20px}
+.logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,#818cf8,#c084fc);display:grid;place-items:center;color:#fff;font-size:19px;flex-shrink:0}
+.brand-name{color:#fff;font-weight:700;font-size:15px;letter-spacing:.5px}
+.brand-sub{font-size:11px;color:#a5b4fc;margin-top:1px}
+.nav{display:flex;flex-direction:column;gap:3px}
+.nav-item{display:flex;align-items:center;gap:11px;padding:10px 13px;border-radius:11px;border:none;background:transparent;color:#c7d2fe;font-size:13.5px;font-family:inherit;cursor:pointer;text-align:left;transition:.16s;font-weight:500}
+.nav-item:hover{background:rgba(255,255,255,.09);color:#fff}
+.nav-item.active{background:#fff;color:#4338ca;font-weight:700;box-shadow:0 6px 16px rgba(0,0,0,.25)}
+.nav-icon{font-size:15px;width:18px;text-align:center}
+.sidebar-footer{margin-top:auto;padding-top:16px;border-top:1px solid rgba(255,255,255,.12)}
+.mini-user{display:flex;align-items:center;gap:10px;padding:10px 8px 14px}
+.mu-name{color:#fff;font-size:13.5px;font-weight:600}
+.mu-role{font-size:11.5px;color:#a5b4fc}
+.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#e0e7ff,#c7d2fe);display:grid;place-items:center;font-size:17px;flex-shrink:0}
+
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:18px 26px;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20}
+.topbar h1{font-size:18px}
+.top-actions{display:flex;align-items:center;gap:12px}
+.role-chip{font-size:12px;font-weight:700;padding:5px 12px;border-radius:99px;background:#f1f5f9;color:#475569}
+.role-chip.admin{background:#fee2e2;color:#b91c1c}
+.role-chip.leader{background:#fef3c7;color:#b45309}
+.content{padding:24px 26px 60px;max-width:1240px;width:100%}
+
+/* 通用组件 */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:none;border-radius:10px;padding:9px 16px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;transition:.16s;white-space:nowrap}
+.btn.primary{background:var(--primary);color:#fff;box-shadow:0 4px 12px rgba(79,70,229,.3)}
+.btn.primary:hover{background:var(--primary-dark)}
+.btn.ghost{background:#fff;color:#374151;border:1px solid var(--border)}
+.btn.ghost:hover{background:#f9fafb;border-color:#c7d2fe}
+.btn.danger{color:var(--danger);border-color:#fecaca}
+.btn.danger:hover{background:#fef2f2}
+.btn.sm{padding:6px 12px;font-size:12.5px}
+.btn.block{width:100%}
+.btn.ghost.block{background:rgba(255,255,255,.08);color:#e0e7ff;border-color:rgba(255,255,255,.2)}
+.btn.ghost.block:hover{background:rgba(255,255,255,.18)}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
+.card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.row{display:flex;align-items:center}
+.row.between{justify-content:space-between}
+.row.gap{gap:10px;flex-wrap:wrap}
+.sm{font-size:12.5px}
+.muted{color:var(--muted)}
+.nowrap{white-space:nowrap}
+.page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.page-head p{font-size:13px;margin-top:3px}
+
+.badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11.5px;font-weight:700}
+.badge.green{background:#dcfce7;color:#15803d}
+.badge.blue{background:#dbeafe;color:#1d4ed8}
+.badge.amber{background:#fef3c7;color:#b45309}
+.badge.gray{background:#f1f5f9;color:#475569}
+.badge.red{background:#fee2e2;color:#b91c1c}
+.badge.purple{background:#ede9fe;color:#6d28d9}
+
+.bar{height:7px;background:#eef0f7;border-radius:99px;overflow:hidden}
+.bar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#6366f1,#a78bfa);transition:width .4s}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:14px;margin-bottom:22px}
+.stat{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:18px}
+.stat .k{font-size:12.5px;color:var(--muted);font-weight:500}
+.stat .v{font-size:27px;font-weight:800;margin-top:4px;letter-spacing:-.5px}
+.stat .unit{font-size:13px;font-weight:600;color:var(--muted);margin-left:3px}
+
+.empty{padding:26px;text-align:center;color:#9ca3af;font-size:13px}
+
+.list-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #f1f5f9}
+.list-row:last-child{border-bottom:none}
+.lr-title{font-weight:600;font-size:13.5px}
+.lr-sub{font-size:12px;color:var(--muted);margin-top:2px}
+
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;padding:10px 12px;background:#f8fafc;color:var(--muted);font-size:12.5px;font-weight:700;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:11px 12px;border-bottom:1px solid #f1f5f9;vertical-align:top}
+tr:last-child td{border-bottom:none}
+.table-wrap{overflow-x:auto}
+
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12.5px;font-weight:700;margin-bottom:6px;color:#374151}
+input,textarea,select{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;font-size:13.5px;font-family:inherit;outline:none;background:#fff;transition:.15s;color:var(--text)}
+input:focus,textarea:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(79,70,229,.13)}
+textarea{resize:vertical;min-height:88px;line-height:1.6}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{font-size:11.5px;padding:3px 10px;border-radius:99px;background:var(--primary-light);color:#4338ca;font-weight:600}
+
+.desc{color:var(--muted);font-size:13px;margin:10px 0 4px}
+.metrics{margin-top:14px;display:flex;flex-direction:column;gap:11px}
+.metric .row{font-size:12.5px;margin-bottom:5px}
+
+.tabs{display:flex;gap:6px;background:#fff;border:1px solid var(--border);border-radius:12px;padding:5px;margin-bottom:18px;overflow-x:auto}
+.tab{border:none;background:transparent;padding:8px 15px;border-radius:9px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;font-family:inherit;white-space:nowrap;transition:.15s}
+.tab:hover{background:#f5f6fb;color:var(--text)}
+.tab.active{background:var(--primary);color:#fff;box-shadow:0 3px 10px rgba(79,70,229,.3)}
+
+.modal-mask{position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:20px;z-index:100;backdrop-filter:blur(3px)}
+.modal{background:#fff;border-radius:18px;width:100%;max-width:520px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 24px 70px rgba(0,0,0,.35);animation:pop .18s ease}
+.modal.wide{max-width:860px}
+@keyframes pop{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-head{display:flex;justify-content:space-between;align-items:center;padding:17px 22px;border-bottom:1px solid var(--border)}
+.modal-body{padding:20px 22px;overflow-y:auto}
+.modal-foot{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px}
+.icon-btn{border:none;background:#f3f4f6;width:30px;height:30px;border-radius:9px;cursor:pointer;color:#6b7280;font-size:14px}
+.icon-btn:hover{background:#e5e7eb}
+
+/* 课表网格 */
+.tt-grid{display:grid;grid-template-columns:70px repeat(7,1fr);gap:4px;text-align:center;margin-top:10px}
+.tt-cell{padding:10px 4px;border-radius:8px;background:#f8fafc;border:1px solid var(--border);cursor:pointer;font-size:12.5px;transition:.15s;user-select:none}
+.tt-cell.header{background:transparent;border:none;font-weight:700;color:var(--muted);cursor:default}
+.tt-cell.busy{background:#fee2e2;border-color:#fca5a5;color:#b91c1c;font-weight:600}
+.tt-cell.free:hover{background:#e0e7ff;border-color:#a5b4fc}
+.tt-cell.busy:hover{background:#fecaca;border-color:#f87171}
+
+/* 开关 */
+.switch{position:relative;display:inline-block;width:44px;height:24px}
+.switch input{opacity:0;width:0;height:0}
+.slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#ccc;transition:.4s;border-radius:24px}
+.slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background-color:white;transition:.4s;border-radius:50%}
+input:checked + .slider{background-color:var(--primary)}
+input:checked + .slider:before{transform:translateX(20px)}
+
+/* Toast 轻提示 */
+.toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(17,24,39,0.9); color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 14px; z-index: 9999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+.toast.show { opacity: 1; }
+
+/* ================= AI 助手悬浮窗 ================= */
+#ai-fab { position:fixed; bottom:30px; right:30px; width:60px; height:60px; border-radius:50%; background:linear-gradient(135deg,#4f46e5,#8b5cf6); color:#fff; font-size:28px; display:grid; place-items:center; cursor:pointer; box-shadow:0 10px 25px rgba(79,70,229,.4); z-index:999; transition:.2s; }
+#ai-fab:hover { transform:scale(1.1); box-shadow:0 15px 35px rgba(79,70,229,.6); }
+#ai-chat { position:fixed; bottom:100px; right:30px; width:380px; height:520px; background:#fff; border-radius:18px; box-shadow:0 20px 50px rgba(0,0,0,.15); display:none; flex-direction:column; z-index:1000; border:1px solid var(--border); overflow:hidden; }
+#ai-chat.show { display:flex; }
+.ai-head { background:#f8fafc; padding:14px 18px; border-bottom:1px solid var(--border); font-weight:700; display:flex; justify-content:space-between; align-items:center; color:var(--text); }
+.ai-body { flex:1; padding:16px; overflow-y:auto; display:flex; flex-direction:column; gap:12px; background:#fafbff; }
+.msg { max-width:85%; padding:10px 14px; border-radius:12px; font-size:13.5px; line-height:1.5; white-space:pre-wrap; }
+.msg.user { align-self:flex-end; background:var(--primary); color:#fff; border-bottom-right-radius:4px; }
+.msg.ai { align-self:flex-start; background:#fff; border:1px solid var(--border); border-bottom-left-radius:4px; box-shadow:0 2px 6px rgba(0,0,0,.02); }
+.ai-input-wrap { padding:12px; border-top:1px solid var(--border); display:flex; gap:8px; background:#fff; }
+.ai-input-wrap input { flex:1; border:1px solid var(--border); border-radius:10px; padding:10px; outline:none; font-size:13.5px; transition:.15s; }
+.ai-input-wrap input:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(79,70,229,.13); }
+.ai-input-wrap button { background:var(--primary); color:#fff; border:none; border-radius:10px; padding:0 18px; cursor:pointer; font-weight:600; transition:.15s; }
+.ai-input-wrap button:hover { background:var(--primary-dark); }
+
+@media(max-width:900px){
+  .layout{flex-direction:column}
+  .sidebar{width:100%;height:auto;position:static;flex-direction:row;overflow-x:auto;padding:10px;align-items:center;gap:4px}
+  .brand{display:none}
+  .nav{flex-direction:row;gap:4px}
+  .nav-item{white-space:nowrap;padding:8px 12px}
+  .sidebar-footer{display:none}
+  .content{padding:18px 14px 50px}
+  .topbar{padding:14px 16px}
+  .tt-grid{grid-template-columns:50px repeat(7,1fr);font-size:11px}
+  .tt-cell{padding:8px 2px}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<!-- AI 悬浮助手 -->
+<div id="ai-fab" onclick="document.getElementById('ai-chat').classList.toggle('show')">✨</div>
+<div id="ai-chat">
+  <div class="ai-head">
+    <span>✨ 浪屿 AI 小助手</span>
+    <span style="cursor:pointer; padding:5px; color:var(--muted);" onclick="document.getElementById('ai-chat').classList.remove('show')">✕</span>
+  </div>
+  <div class="ai-body" id="ai-chat-body">
+    <div class="msg ai">你好！我是你的工作台助手。你可以直接对我说：<br>1. 帮我建个任务，让干事甲明天写推文，优先级高。<br>2. 查一下还有没有麦克风。<br>3. 在知识库记一条：场地申请流程...</div>
+  </div>
+  <div class="ai-input-wrap">
+    <input id="ai-input" placeholder="输入指令..." onkeydown="if(event.key==='Enter') sendToAI()">
+    <button onclick="sendToAI()">发送</button>
+  </div>
+</div>
+
+<script>
+/* ================= 基础工具 ================= */
+const DB_KEY='xinghuo_org_v5', SKEY='xinghuo_session_v5'; // 升级版本号，确保刷新
+let DB=null, SESSION=null, CURRENT='dashboard', TASK_TAB='board';
+const DEPTS=['文字部','影像部','网宣部'];
+const WEEKS=['周一','周二','周三','周四','周五','周六','周日'];
+const DAY_PARTS=['上午1','上午2','下午1','下午2','晚上1','晚上2'];
+
+const SHIFT_OPTIONS = [
+  '上午1 (08:00-09:50)',
+  '上午2 (10:10-12:00)',
+  '下午1 (14:00-15:50)',
+  '下午2 (16:10-18:00)',
+  '晚上1 (18:30-20:10)',
+  '晚上2 (20:20-22:00)',
+  '全天 (08:00-18:00)'
+];
+
+const $=s=>document.querySelector(s);
+const uid=()=>'i'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const todayStr=()=>{const d=new Date();return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 星期${'日一二三四五六'[d.getDay()]}`;};
+const nowStr=()=>{const d=new Date(),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;};
+const empty=t=>`<div class="empty">${t}</div>`;
+const isAdmin=()=>SESSION.role==='admin';
+const isLeader=()=>SESSION.role==='leader';
+const isManager=()=>SESSION.role==='admin'||SESSION.role==='leader';
+const canManageSupplies=()=>isManager()||SESSION.canManageSupplies;
+
+function showToast(msg) {
+  let el = document.querySelector('.toast');
+  if(!el) {
+    el = document.createElement('div');
+    el.className = 'toast';
+    document.body.appendChild(el);
+  }
+  el.innerText = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+function scoreTotal(s){
+  const v=['attitude','execution','teamwork','innovation','discipline'].map(k=>Number(s[k])||0);
+  return v.reduce((a,b)=>a+b,0)/v.length;
+}
+function parseMetrics(txt){
+  return String(txt||'').split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{
+    const parts=l.split(/[,，\t]/);
+    let name=l, target=0;
+    if(parts.length>=2){ name=parts[0].trim(); target=parseFloat(parts[1])||0; }
+    return {name:name||'指标', target, actual:0};
+  });
+}
+
+/* ================= 默认数据 ================= */
+function seed(){
+  return {
+    users:[
+      {username:'admin',password:'123456',name:'组织管理员',role:'admin',dept:'网宣部',canManageSupplies:true},
+      {username:'leader1',password:'123456',name:'部长甲',role:'leader',dept:'影像部',canManageSupplies:true},
+      {username:'leader2',password:'123456',name:'部长乙',role:'leader',dept:'文字部',canManageSupplies:true},
+      {username:'wang',password:'123456',name:'干事甲',role:'member',dept:'影像部',canManageSupplies:false},
+      {username:'chen',password:'123456',name:'干事乙',role:'member',dept:'文字部',canManageSupplies:true},
+      {username:'zhao',password:'123456',name:'干事丙',role:'member',dept:'网宣部',canManageSupplies:false}
+    ],
+    activities:[
+      {id:'a1',name:'2024 迎新晚会',date:'2024-09-15',category:'文艺活动',owner:'干事乙',
+       desc:'面向全体新生的迎新晚会，包含节目演出、互动抽奖与社团展示环节。',status:'进行中',
+       metrics:[{name:'参与人数',target:800,actual:650},{name:'满意度(%)',target:95,actual:88}]}
+    ],
+    infoForms:[
+      {id:'f1',title:'2024 级新成员信息登记',desc:'请新成员填写个人信息，便于统一管理与活动联系。',
+       fields:['姓名','学号','专业班级','手机号','QQ'],createdBy:'组织管理员',deadline:'2024-10-31'}
+    ],
+    infoSubs:[],
+    tasks:[
+      {id:'t1',title:'迎新晚会宣传海报设计',desc:'完成主视觉海报 3 版并交付印刷',assignee:'干事甲',dept:'影像部',deadline:'2024-09-10',priority:'高',status:'已完成',progress:100,createdBy:'部长甲'},
+      {id:'t2',title:'推文撰写与排版',desc:'首篇迎新推文',assignee:'干事乙',dept:'文字部',deadline:'2024-09-12',priority:'中',status:'进行中',progress:60,createdBy:'部长乙'},
+      {id:'t3',title:'外联赞助策划案',desc:'联系周边商家拉赞助',assignee:'干事丙',dept:'网宣部',deadline:'2024-10-25',priority:'高',status:'待办',progress:0,createdBy:'组织管理员'},
+      {id:'t4',title:'活动物资清点与采购',desc:'核对库存，列出采购清单',assignee:'干事乙',dept:'文字部',deadline:'2024-10-18',priority:'中',status:'待办',progress:0,createdBy:'部长乙'}
+    ],
+    reports:[],
+    summaries:[],
+    scores:[],
+    knowledge:[
+      {id:'k1',title:'活动策划书标准模板',category:'模板',author:'组织管理员',time:'2024-09-01',
+       content:'一、活动背景\n二、活动目的\n三、活动对象\n四、活动流程\n五、人员分工\n六、物资与预算\n七、风险预案'},
+      {id:'k2',title:'财务报销标准流程',category:'流程',author:'组织管理员',time:'2024-09-02',
+       content:'1. 收集发票原件（需抬头、税号）。\n2. 填写《报销单》，注明活动名称与用途。\n3. 交由部长签字审核。\n4. 提交至指导老师签字。\n5. 交由财务处审核打款。\n注意：单张发票金额超500元需附明细。'},
+      {id:'k3',title:'活动场地借用委托书模板',category:'模板',author:'组织管理员',time:'2024-09-03',
+       content:'委 托 书\n\n兹委托【姓名】（学号：【学号】）代表【组织名称】办理【场地名称】场地借用事宜。\n委托期限：XXXX年XX月XX日至XXXX年XX月XX日。\n\n委托人（签字）：\n日 期：'},
+      {id:'k4',title:'基础摄影与构图技巧',category:'技能',author:'部长甲',time:'2024-09-05',
+       content:'1. 三分法则：将主体放置在井字格交叉点上。\n2. 引导线：利用道路、栏杆等线条引导视线。\n3. 光线运用：逆光拍剪影，侧光体现质感。\n4. 曝光补偿：白加黑减。'}
+    ],
+    supplies:[
+      {id:'sp1',name:'折叠桌',category:'器材',unit:'张',total:10,available:8,location:'活动室 A',note:''},
+      {id:'sp2',name:'A4 打印纸',category:'耗材',unit:'包',total:20,available:15,location:'办公室',note:''},
+      {id:'sp3',name:'相机',category:'器材',unit:'台',total:3,available:2,location:'保险柜',note:'含镜头'},
+      {id:'sp4',name:'无线麦克风',category:'器材',unit:'套',total:5,available:5,location:'活动室 A',note:''}
+    ],
+    schedules:[],
+    timetables:[]
+  };
+}
+
+function load(){
+  try{ DB=JSON.parse(localStorage.getItem(DB_KEY)); }catch(e){ DB=null; }
+  if(!DB||!DB.users){ DB=seed(); save(); }
+  const cutoff = new Date(); cutoff.setFullYear(cutoff.getFullYear()-2);
+  const cutoffStr = cutoff.toISOString().slice(0,10);
+  const oldLen = DB.schedules.length;
+  DB.schedules = DB.schedules.filter(s => s.date >= cutoffStr);
+  if(DB.schedules.length !== oldLen) save();
+}
+function save(){ localStorage.setItem(DB_KEY,JSON.stringify(DB)); }
+
+/* ================= 弹窗 ================= */
+function showModal({title,body,okText='保存',onOk,wide}){
+  const el=document.createElement('div');
+  el.className='modal-mask';
+  el.innerHTML=`<div class="modal ${wide?'wide':''}">
+    <div class="modal-head"><h3>${title}</h3><button class="icon-btn" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">${body}</div>
+    <div class="modal-foot">
+      <button class="btn ghost" onclick="closeModal()">取消</button>
+      <button class="btn primary" id="modalOk">${okText}</button>
+    </div></div>`;
+  document.body.appendChild(el);
+  el.querySelector('#modalOk').onclick=()=>{ if(onOk()!==false) closeModal(); };
+  el.addEventListener('click',e=>{ if(e.target===el) closeModal(); });
+}
+function closeModal(){ document.querySelectorAll('.modal-mask').forEach(m=>m.remove()); }
+
+/* ================= 登录 ================= */
+function renderLogin(){
+  document.getElementById('app').innerHTML=`
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-logo">✦</div>
+      <h1 class="login-title">浪屿学生组织工作台</h1>
+      <p class="login-sub">部门协同 · 任务管理 · 智能排班</p><div style="margin:14px 0;padding:11px 13px;border:1px solid #fde68a;border-radius:10px;background:#fffbeb;color:#92400e;font-size:12px">公开演示版：演示账号仅供体验，数据保存在当前浏览器。本版本未接入真实身份认证、云端数据或 AI 服务，请勿输入真实个人信息。</div>
+      <div class="field"><label>账号</label><input id="lgUser" placeholder="请输入账号"></div>
+      <div class="field"><label>密码</label><input id="lgPass" type="password" placeholder="请输入密码"></div>
+      <button class="btn primary block" onclick="doLogin()">登 录</button>
+      <div class="login-hint">
+        <p>演示账号（点击快捷登录）：</p>
+        <div class="demo-rows">
+          <button class="demo" onclick="quickLogin('admin')">👑 管理员　admin / 123456</button>
+          <button class="demo" onclick="quickLogin('leader1')">💼 部长　　 leader1 / 123456</button>
+          <button class="demo" onclick="quickLogin('wang')">🎓 干事　　 wang / 123456</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+  ['lgUser','lgPass'].forEach(id=>{
+    document.getElementById(id).addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
+  });
+}
+function doLogin(){
+  const u=$('#lgUser').value.trim(), p=$('#lgPass').value.trim();
+  const user=DB.users.find(x=>x.username===u&&x.password===p);
+  if(!user){ showToast('账号或密码不正确'); return; }
+  SESSION=user; sessionStorage.setItem(SKEY,JSON.stringify(user));
+  CURRENT='dashboard'; renderApp();
+}
+function quickLogin(name){ $('#lgUser').value=name; $('#lgPass').value='123456'; doLogin(); }
+function logout(){ if(!confirm('确定退出登录吗？')) return; SESSION=null; sessionStorage.removeItem(SKEY); renderLogin(); }
+
+/* ================= 应用外壳 ================= */
+const PAGES=[
+  {key:'dashboard',label:'工作台',icon:'🏠'},
+  {key:'activities',label:'活动成效预期',icon:'🎯'},
+  {key:'info',label:'信息收集',icon:'📋'},
+  {key:'tasks',label:'任务栏',icon:'✅'},
+  {key:'knowledge',label:'知识库',icon:'📚'},
+  {key:'supplies',label:'物资统计',icon:'📦'},
+  {key:'schedule',label:'排班与课表',icon:'📅'},
+  {key:'adminUsers',label:'成员与权限管理',icon:'⚙️',adminOnly:true}
+];
+function nav(p){ CURRENT=p; renderApp(); window.scrollTo(0,0); }
+
+function renderApp(){
+  if(!SESSION){ renderLogin(); return; }
+  const u=SESSION;
+  const title=(PAGES.find(p=>p.key===CURRENT)||PAGES[0]).label;
+  const allowedPages=PAGES.filter(p=>!p.adminOnly || isAdmin());
+  
+  let roleName = u.role==='admin' ? '管理员' : u.role==='leader' ? '部长' : '干事';
+  let roleClass = u.role==='admin' ? 'admin' : u.role==='leader' ? 'leader' : '';
+
+  document.getElementById('app').innerHTML=`
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo">✦</div>
+        <div><div class="brand-name">浪屿工作台</div><div class="brand-sub">学生组织协作平台</div></div>
+      </div>
+      <nav class="nav">
+        ${allowedPages.map(p=>`<button class="nav-item ${CURRENT===p.key?'active':''}" onclick="nav('${p.key}')">
+          <span class="nav-icon">${p.icon}</span>${p.label}</button>`).join('')}
+      </nav>
+      <div class="sidebar-footer">
+        <div class="mini-user">
+          <span class="avatar">${u.role==='admin'?'👑':u.role==='leader'?'💼':'🎓'}</span>
+          <div><div class="mu-name">${esc(u.name)}</div><div class="mu-role">${esc(u.dept)} · ${roleName}</div></div>
+        </div>
+        <button class="btn ghost block sm" onclick="logout()">退出登录</button>
+      </div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <div><h1>${title}</h1><p class="muted sm">${todayStr()}</p></div>
+        <div class="top-actions">
+          <span class="role-chip ${roleClass}">${roleName}</span>
+          <span class="muted sm">${esc(u.dept)}</span>
+        </div>
+      </header>
+      <div class="content" id="content">${renderPage()}</div>
+    </main>
+  </div>`;
+}
+function renderPage(){
+  switch(CURRENT){
+    case 'dashboard': return pageDashboard();
+    case 'activities': return pageActivities();
+    case 'info': return pageInfo();
+    case 'tasks': return pageTasks();
+    case 'knowledge': return pageKnowledge();
+    case 'supplies': return pageSupplies();
+    case 'schedule': return pageSchedule();
+    case 'adminUsers': return pageAdminUsers();
+    default: return '';
+  }
+}
+function refresh(){ save(); renderApp(); }
+
+/* ================= 工作台 ================= */
+function pageDashboard(){
+  const u=SESSION;
+  const myTasks=DB.tasks.filter(t=>t.assignee===u.name);
+  const done=myTasks.filter(t=>t.status==='已完成').length;
+  const rate=myTasks.length?Math.round(done/myTasks.length*100):0;
+  
+  const deptTasks=DB.tasks.filter(t=>t.dept===u.dept);
+  const deptDone=deptTasks.filter(t=>t.status==='已完成').length;
+  const deptRate=deptTasks.length?Math.round(deptDone/deptTasks.length*100):0;
+  
+  return `
+  <div class="stats">
+    <div class="stat"><div class="k">我的任务完成率</div><div class="v">${rate}<span class="unit">%</span></div>
+      <div class="bar" style="margin-top:11px"><i style="width:${rate}%"></i></div></div>
+    <div class="stat"><div class="k">本部门任务完成率</div><div class="v">${deptRate}<span class="unit">%</span></div>
+      <div class="bar" style="margin-top:11px"><i style="width:${deptRate}%"></i></div></div>
+    <div class="stat"><div class="k">知识库文档</div><div class="v">${DB.knowledge.length}<span class="unit">篇</span></div></div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-head"><h3>我的待办任务</h3><button class="btn ghost sm" onclick="nav('tasks')">查看全部</button></div>
+      ${myTasks.filter(t=>t.status!=='已完成').slice(0,5).map(t=>`
+        <div class="list-row">
+          <div class="lr-main"><div class="lr-title">${esc(t.title)}</div><div class="lr-sub">截止 ${esc(t.deadline||'未设置')}</div></div>
+          <span class="badge ${t.priority==='高'?'red':t.priority==='中'?'amber':'gray'}">${esc(t.priority)}</span>
+        </div>`).join('')||empty('暂无待办任务')}
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>本部门最新任务</h3></div>
+      ${deptTasks.filter(t=>t.status!=='已完成').slice(0,5).map(t=>`
+        <div class="list-row">
+          <div class="lr-main"><div class="lr-title">${esc(t.title)}</div><div class="lr-sub">${esc(t.assignee)} · 截止 ${esc(t.deadline||'未设置')}</div></div>
+          <span class="badge ${t.status==='进行中'?'blue':'gray'}">${esc(t.status)}</span>
+        </div>`).join('')||empty('本部门暂无任务')}
+    </div>
+  </div>`;
+}
+
+/* ================= 活动成效预期 ================= */
+function pageActivities(){
+  return `
+  <div class="page-head">
+    <div><h2>活动成效预期</h2><p class="muted">全员可见，部长/管理员可建立与填写成果。</p></div>
+    ${isManager()?`<button class="btn primary" onclick="activityForm()">+ 新建活动</button>`:''}
+  </div>
+  <div class="grid-2">
+    ${DB.activities.map(a=>{
+      const rows=a.metrics.map(m=>{
+        const p=m.target?Math.min(100,Math.round(m.actual/m.target*100)):0;
+        const color=p>=80?'linear-gradient(90deg,#10b981,#34d399)':p>=50?'linear-gradient(90deg,#f59e0b,#fbbf24)':'linear-gradient(90deg,#ef4444,#f87171)';
+        const tc=p>=80?'#10b981':p>=50?'#f59e0b':'#ef4444';
+        return `<div class="metric">
+          <div class="row between sm"><span>${esc(m.name)}</span>
+            <span class="muted">${m.actual} / ${m.target} · <b style="color:${tc}">${p}%</b></span></div>
+          <div class="bar"><i style="width:${p}%;background:${color}"></i></div>
+        </div>`;
+      }).join('');
+      return `<div class="card">
+        <div class="row between" style="align-items:flex-start">
+          <div><h3>${esc(a.name)}</h3>
+            <div class="muted sm" style="margin-top:4px">${esc(a.category)} · 负责人 ${esc(a.owner)} · ${esc(a.date)}</div></div>
+          <span class="badge ${a.status==='已完成'?'green':a.status==='进行中'?'blue':'gray'}">${esc(a.status)}</span>
+        </div>
+        <p class="desc">${esc(a.desc||'')}</p>
+        <div class="metrics">${rows||empty('未设置指标')}</div>
+        ${isManager()?`<div class="row gap" style="margin-top:16px">
+          <button class="btn ghost sm" onclick="editActual('${a.id}')">填写实际成果</button>
+          ${isAdmin()?`<button class="btn ghost sm danger" onclick="delRow('activities','${a.id}')">删除</button>`:''}
+        </div>`:''}
+      </div>`;
+    }).join('')||empty('暂无活动')}
+  </div>`;
+}
+function activityForm(){
+  showModal({title:'新建活动',okText:'创建',body:`
+    <div class="field"><label>活动名称</label><input id="acName" placeholder="例如：迎新晚会"></div>
+    <div class="row gap" style="align-items:flex-end">
+      <div class="field" style="flex:1"><label>类别</label><input id="acCat" placeholder="文艺活动"></div>
+      <div class="field" style="flex:1"><label>活动日期</label><input id="acDate" type="date"></div>
+    </div>
+    <div class="field"><label>负责人</label><input id="acOwner" value="${esc(SESSION.name)}"></div>
+    <div class="field"><label>活动简介</label><textarea id="acDesc"></textarea></div>
+    <div class="field"><label>预期指标（每行一个，格式：指标名称,目标值）</label>
+      <textarea id="acMetrics" placeholder="参与人数,800&#10;满意度,95"></textarea></div>
+  `,onOk:()=>{
+    const name=$('#acName').value.trim();
+    if(!name){ showToast('请填写活动名称'); return false; }
+    DB.activities.unshift({
+      id:uid(),name,category:$('#acCat').value.trim()||'其他',
+      date:$('#acDate').value||'待定',owner:$('#acOwner').value.trim()||SESSION.name,
+      desc:$('#acDesc').value.trim(),status:'筹备中',
+      metrics:parseMetrics($('#acMetrics').value)
+    });
+    refresh();
+  }});
+}
+function editActual(id){
+  const a=DB.activities.find(x=>x.id===id); if(!a) return;
+  const body=a.metrics.map((m,i)=>`
+    <div class="row gap" style="margin-bottom:10px;align-items:center">
+      <div style="flex:1;font-size:13.5px">${esc(m.name)} <span class="muted sm">（目标 ${m.target}）</span></div>
+      <input type="number" id="act_${i}" value="${m.actual}" style="width:120px">
+    </div>`).join('')+`
+    <div class="field" style="margin-top:16px"><label>活动状态</label>
+      <select id="actStatus">${['筹备中','进行中','已完成'].map(s=>`<option ${a.status===s?'selected':''}>${s}</option>`).join('')}</select>
+    </div>`;
+  showModal({title:'填写实际成果 · '+esc(a.name),body,onOk:()=>{
+    a.metrics.forEach((m,i)=>{ m.actual=Number($('#act_'+i).value)||0; });
+    a.status=$('#actStatus').value;
+    refresh();
+  }});
+}
+
+/* ================= 信息收集 ================= */
+function pageInfo(){
+  return `
+  <div class="page-head">
+    <div><h2>信息收集</h2><p class="muted">全局可见，部长/管理员发布，全员填写。</p></div>
+    ${isManager()?`<button class="btn primary" onclick="formCreate()">+ 新建收集</button>`:''}
+  </div>
+  <div class="grid-2">
+    ${DB.infoForms.map(f=>{
+      const subs=DB.infoSubs.filter(s=>s.formId===f.id);
+      const mine=subs.find(s=>s.user===SESSION.name);
+      return `<div class="card">
+        <div class="row between" style="align-items:flex-start">
+          <h3 style="flex:1">${esc(f.title)}</h3>
+          ${isManager()?`<span class="badge blue">${subs.length} 份提交</span>`
+                   :(mine?`<span class="badge green">已提交</span>`:`<span class="badge amber">待填写</span>`)}
+        </div>
+        <p class="desc">${esc(f.desc||'')}</p>
+        <div class="chips">${f.fields.map(x=>`<span class="chip">${esc(x)}</span>`).join('')}</div>
+        <div class="muted sm" style="margin:14px 0">截止时间：${esc(f.deadline||'不限')}</div>
+        <div class="row gap">
+          ${isManager()
+            ? `<button class="btn ghost sm" onclick="formView('${f.id}')">查看汇总</button>
+               ${isAdmin()?`<button class="btn ghost sm danger" onclick="delRow('infoForms','${f.id}')">删除</button>`:''}`
+            : `<button class="btn primary sm" onclick="formFill('${f.id}')">${mine?'修改提交':'填写信息'}</button>`}
+        </div>
+      </div>`;
+    }).join('')||empty('暂无收集表')}
+  </div>`;
+}
+function formCreate(){
+  showModal({title:'新建信息收集',okText:'发布',body:`
+    <div class="field"><label>收集标题</label><input id="ifTitle" placeholder="例如：新成员信息登记"></div>
+    <div class="field"><label>说明</label><textarea id="ifDesc"></textarea></div>
+    <div class="field"><label>收集字段（用逗号分隔）</label>
+      <input id="ifFields" value="姓名,学号,专业班级,手机号,QQ"></div>
+    <div class="field"><label>截止日期</label><input id="ifDeadline" type="date"></div>
+  `,onOk:()=>{
+    const title=$('#ifTitle').value.trim();
+    if(!title){ showToast('请填写收集标题'); return false; }
+    const fields=$('#ifFields').value.split(/[,，]/).map(s=>s.trim()).filter(Boolean);
+    DB.infoForms.unshift({id:uid(),title,desc:$('#ifDesc').value.trim(),
+      fields:fields.length?fields:['姓名'],createdBy:SESSION.name,deadline:$('#ifDeadline').value||''});
+    refresh();
+  }});
+}
+function formFill(id){
+  const f=DB.infoForms.find(x=>x.id===id); if(!f) return;
+  const mine=DB.infoSubs.find(s=>s.formId===id&&s.user===SESSION.name);
+  const body=f.fields.map((fd,i)=>`<div class="field"><label>${esc(fd)}</label>
+    <input id="ff_${i}" value="${mine?esc(mine.values[fd]||''):''}"></div>`).join('');
+  showModal({title:esc(f.title),okText:'提交',body,onOk:()=>{
+    const values={};
+    f.fields.forEach((fd,i)=>{ values[fd]=$('#ff_'+i).value.trim(); });
+    if(mine){ mine.values=values; mine.time=nowStr(); }
+    else DB.infoSubs.push({id:uid(),formId:id,user:SESSION.name,values,time:nowStr()});
+    refresh(); showToast('提交成功！');
+  }});
+}
+function formView(id){
+  const f=DB.infoForms.find(x=>x.id===id); if(!f) return;
+  const subs=DB.infoSubs.filter(s=>s.formId===id);
+  const body=subs.length?`
+    <div class="table-wrap"><table>
+      <thead><tr><th>提交人</th>${f.fields.map(x=>`<th>${esc(x)}</th>`).join('')}<th>提交时间</th></tr></thead>
+      <tbody>${subs.map(s=>`<tr><td><b>${esc(s.user)}</b></td>
+        ${f.fields.map(x=>`<td>${esc(s.values[x]||'—')}</td>`).join('')}
+        <td class="muted sm">${esc(s.time)}</td></tr>`).join('')}</tbody>
+    </table></div>`:empty('暂无提交记录');
+  showModal({title:'汇总 · '+esc(f.title),body,okText:'关闭',wide:true,onOk:()=>{}});
+}
+
+/* ================= 任务栏 ================= */
+function pageTasks(){
+  const tabs=[['board','任务看板'],['report','个人汇报'],['summary','年终总结'],['score','部长打分']];
+  let body='';
+  if(TASK_TAB==='board') body=taskBoard();
+  else if(TASK_TAB==='report') body=taskReports();
+  else if(TASK_TAB==='summary') body=taskSummary();
+  else body=taskScores();
+  return `<div class="tabs">${tabs.map(([k,l])=>
+    `<button class="tab ${TASK_TAB===k?'active':''}" onclick="setTab('${k}')">${l}</button>`).join('')}</div>`+body;
+}
+function setTab(k){ TASK_TAB=k; renderApp(); window.scrollTo(0,0); }
+
+function getMyDeptTasks() {
+  if (isAdmin()) return DB.tasks;
+  if (isLeader()) return DB.tasks.filter(t => t.dept === SESSION.dept);
+  return DB.tasks.filter(t => t.assignee === SESSION.name);
+}
+
+function taskBoard(){
+  const tasks = getMyDeptTasks();
+  return `
+  <div class="page-head">
+    <div><h2>任务看板</h2><p class="muted">${isManager()?'管理任务':'我的任务'}</p></div>
+    ${isManager()?`<button class="btn primary" onclick="taskForm()">+ 新建任务</button>`:''}
+  </div>
+  <div class="card">
+    <div class="table-wrap"><table>
+      <thead><tr><th>任务</th><th>负责人</th>${isManager()?'<th>所属部门</th>':''}<th>截止日期</th><th>优先级</th><th>状态</th><th>操作</th></tr></thead>
+      <tbody>${tasks.map(t=>`<tr>
+        <td style="min-width:180px"><b>${esc(t.title)}</b><div class="muted sm">${esc(t.desc||'')}</div></td>
+        <td>${esc(t.assignee)}</td>
+        ${isManager()?`<td><span class="badge gray">${esc(t.dept)}</span></td>`:''}
+        <td class="sm">${esc(t.deadline||'—')}</td>
+        <td><span class="badge ${t.priority==='高'?'red':t.priority==='中'?'amber':'gray'}">${esc(t.priority)}</span></td>
+        <td><span class="badge ${t.status==='已完成'?'green':t.status==='进行中'?'blue':'gray'}">${esc(t.status)}</span></td>
+        <td class="nowrap">
+          <button class="btn ghost sm" onclick="taskUpdate('${t.id}')">更新进度</button>
+          ${isAdmin()?`<button class="btn ghost sm danger" onclick="delRow('tasks','${t.id}')">删除</button>`:''}
+        </td>
+      </tr>`).join('')||`<tr><td colspan="${isManager()?7:6}">${empty('暂无任务')}</td></tr>`}</tbody>
+    </table></div>
+  </div>`;
+}
+
+function taskForm(){
+  const members = isAdmin() ? DB.users : DB.users.filter(u => u.dept === SESSION.dept);
+  showModal({title:'新建任务',okText:'创建',body:`
+    <div class="field"><label>任务标题</label><input id="tkTitle"></div>
+    <div class="field"><label>任务描述</label><textarea id="tkDesc"></textarea></div>
+    <div class="row gap" style="align-items:flex-end">
+      <div class="field" style="flex:1"><label>负责人</label>
+        <select id="tkAssignee">
+          ${members.map(m=>`<option value="${esc(m.name)}" data-dept="${esc(m.dept)}">${esc(m.name)} (${esc(m.dept)})</option>`).join('')}
+        </select>
+      </div>
+      <div class="field" style="flex:1"><label>截止日期</label><input id="tkDeadline" type="date"></div>
+    </div>
+    <div class="field"><label>优先级</label>
+      <select id="tkPriority"><option>高</option><option selected>中</option><option>低</option></select></div>
+  `,onOk:()=>{
+    const title=$('#tkTitle').value.trim();
+    if(!title){ showToast('请填写任务标题'); return false; }
+    const sel = $('#tkAssignee');
+    const assigneeName = sel.value;
+    const taskDept = sel.options[sel.selectedIndex].getAttribute('data-dept') || SESSION.dept;
+    
+    DB.tasks.unshift({id:uid(),title,desc:$('#tkDesc').value.trim(),
+      assignee:assigneeName, dept:taskDept, deadline:$('#tkDeadline').value||'',
+      priority:$('#tkPriority').value,status:'待办',progress:0,createdBy:SESSION.name});
+    refresh();
+  }});
+}
+function taskUpdate(id){
+  const t=DB.tasks.find(x=>x.id===id); if(!t) return;
+  showModal({title:'更新任务 · '+esc(t.title),body:`
+    <div class="field"><label>状态</label>
+      <select id="tuStatus">${['待办','进行中','已完成'].map(s=>`<option ${t.status===s?'selected':''}>${s}</option>`).join('')}</select></div>
+    <div class="field"><label>进度（0-100）</label><input id="tuProgress" type="number" min="0" max="100" value="${t.progress}"></div>
+  `,onOk:()=>{
+    t.status=$('#tuStatus').value;
+    t.progress=Math.max(0,Math.min(100,Number($('#tuProgress').value)||0));
+    if(t.status==='已完成') t.progress=100;
+    refresh();
+  }});
+}
+
+function taskReports(){
+  const reports = DB.reports.filter(r => {
+    if (isManager()) {
+      const user = DB.users.find(u => u.name === r.user);
+      return user && user.dept === SESSION.dept;
+    }
+    return r.user === SESSION.name;
+  });
+  return `
+  <div class="page-head"><div><h2>个人任务汇报</h2></div>
+    <button class="btn primary" onclick="reportForm()">+ 提交汇报</button></div>
+  <div class="grid-2">
+    ${reports.map(r=>`<div class="card">
+      <div class="row between"><h3>${esc(r.task)}</h3><span class="badge purple">${r.hours} 小时</span></div>
+      <div class="muted sm" style="margin-top:4px">${esc(r.user)} · ${esc(r.time)}</div>
+      <p class="desc" style="white-space:pre-wrap">${esc(r.content)}</p>
+    </div>`).join('')||empty('暂无汇报')}
+  </div>`;
+}
+function reportForm(){
+  showModal({title:'提交任务汇报',okText:'提交',body:`
+    <div class="field"><label>关联任务</label><input id="rpTask"></div>
+    <div class="field"><label>工作内容</label><textarea id="rpContent"></textarea></div>
+    <div class="field"><label>投入时长（小时）</label><input id="rpHours" type="number" value="8"></div>
+  `,onOk:()=>{
+    const task=$('#rpTask').value.trim();
+    if(!task){ showToast('请填写关联任务'); return false; }
+    DB.reports.unshift({id:uid(),user:SESSION.name,task,
+      content:$('#rpContent').value.trim(),hours:Number($('#rpHours').value)||0,time:nowStr().slice(0,10)});
+    refresh();
+  }});
+}
+
+function taskSummary(){
+  const sums = DB.summaries.filter(s => {
+    if (isManager()) {
+      const user = DB.users.find(u => u.name === s.user);
+      return user && user.dept === SESSION.dept;
+    }
+    return s.user === SESSION.name;
+  });
+  return `
+  <div class="page-head"><div><h2>年终总结</h2></div>
+    <button class="btn primary" onclick="summaryForm()">+ 撰写总结</button></div>
+  <div class="grid-2">
+    ${sums.map(s=>`<div class="card">
+      <div class="row between"><h3>${esc(s.user)} · ${esc(s.year)}</h3></div>
+      <p class="desc" style="white-space:pre-wrap">${esc(s.content)}</p>
+    </div>`).join('')||empty('暂无总结')}
+  </div>`;
+}
+function summaryForm(){
+  showModal({title:'撰写年终总结',okText:'提交',body:`
+    <div class="field"><label>年度</label><input id="smYear" value="${new Date().getFullYear()}"></div>
+    <div class="field"><label>总结正文</label><textarea id="smContent" style="min-height:150px"></textarea></div>
+  `,onOk:()=>{
+    DB.summaries.unshift({id:uid(),user:SESSION.name,
+      year:$('#smYear').value.trim()||'—',content:$('#smContent').value.trim(),time:nowStr().slice(0,10)});
+    refresh();
+  }});
+}
+
+function taskScores(){
+  if(!isManager()) return empty('无权限查看打分');
+  const members=DB.users.filter(u=>u.role!=='admin' && u.dept===SESSION.dept);
+  const scores=DB.scores.filter(s=>s.dept===SESSION.dept);
+  return `
+  <div class="page-head"><div><h2>部长打分（本部门）</h2></div>
+    <button class="btn primary" onclick="scoreForm()">+ 新增评分</button></div>
+  <div class="card">
+    <div class="table-wrap"><table>
+      <thead><tr><th>成员</th><th>月份</th><th>态度</th><th>执行</th><th>协作</th><th>综合</th><th>评语</th></tr></thead>
+      <tbody>${scores.map(s=>`<tr>
+        <td><b>${esc(s.target)}</b></td>
+        <td class="sm">${esc(s.month)}</td>
+        <td>${s.attitude}</td><td>${s.execution}</td><td>${s.teamwork}</td>
+        <td><b style="color:#4f46e5">${Math.round(scoreTotal(s))}</b></td>
+        <td class="sm muted">${esc(s.comment||'—')}</td>
+      </tr>`).join('')||`<tr><td colspan="7">${empty('暂无评分记录')}</td></tr>`}</tbody>
+    </table></div>
+  </div>`;
+}
+function scoreForm(){
+  const members=DB.users.filter(u=>u.role!=='admin' && u.dept===SESSION.dept);
+  const dims=[['attitude','工作态度'],['execution','执行能力'],['teamwork','团队协作'],['innovation','创新性'],['discipline','纪律性']];
+  showModal({title:'部长打分',okText:'提交',body:`
+    <div class="row gap" style="align-items:flex-end">
+      <div class="field" style="flex:1"><label>评分对象</label>
+        <select id="scTarget">${members.map(m=>`<option>${esc(m.name)}</option>`).join('')}</select></div>
+      <div class="field" style="flex:1"><label>考核月份</label>
+        <input id="scMonth" type="month" value="${new Date().toISOString().slice(0,7)}"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      ${dims.map(([k,l])=>`<div class="field" style="margin:0"><label>${l}</label>
+        <input id="sc_${k}" type="number" min="0" max="100" value="85"></div>`).join('')}
+    </div>
+    <div class="field" style="margin-top:14px"><label>评语</label><textarea id="scComment"></textarea></div>
+  `,onOk:()=>{
+    DB.scores.unshift({id:uid(),target:$('#scTarget').value,dept:SESSION.dept,month:$('#scMonth').value||'—',
+      attitude:+$('#sc_attitude').value,execution:+$('#sc_execution').value,teamwork:+$('#sc_teamwork').value,
+      innovation:+$('#sc_innovation').value,discipline:+$('#sc_discipline').value,
+      comment:$('#scComment').value.trim(),scorer:SESSION.name,time:nowStr()});
+    refresh();
+  }});
+}
+
+/* ================= 知识库 ================= */
+function pageKnowledge(){
+  return `
+  <div class="page-head">
+    <div><h2>知识库</h2><p class="muted">沉淀模板与经验，全员可见。</p></div>
+    ${isManager()?`<button class="btn primary" onclick="kbForm()">+ 新增文档</button>`:''}
+  </div>
+  <div class="card" style="margin-bottom:16px">
+    <input placeholder="🔍 搜索文档标题或内容…" oninput="filterKB(this.value)">
+  </div>
+  <div class="grid-2">
+    ${DB.knowledge.map(k=>`<div class="card" data-kb="${esc((k.title+' '+k.category+' '+k.content).toLowerCase())}">
+      <div class="row between" style="align-items:flex-start">
+        <h3 style="flex:1">${esc(k.title)}</h3>
+        <span class="badge purple">${esc(k.category)}</span>
+      </div>
+      <div class="muted sm" style="margin-top:4px">${esc(k.author)} · ${esc(k.time)}</div>
+      <p class="desc" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${esc(k.content)}</p>
+      <div class="row gap">
+        <button class="btn ghost sm" onclick="kbView('${k.id}')">阅读全文</button>
+        ${isAdmin()?`<button class="btn ghost sm danger" onclick="delRow('knowledge','${k.id}')">删除</button>`:''}
+      </div>
+    </div>`).join('')||empty('知识库暂无内容')}
+  </div>`;
+}
+function filterKB(v){
+  const q=v.toLowerCase().trim();
+  document.querySelectorAll('[data-kb]').forEach(el=>{
+    el.style.display = !q || el.dataset.kb.includes(q) ? '' : 'none';
+  });
+}
+function kbView(id){
+  const k=DB.knowledge.find(x=>x.id===id); if(!k) return;
+  showModal({title:esc(k.title),okText:'关闭',wide:true,body:`
+    <div class="muted sm" style="margin-bottom:14px">${esc(k.category)} · ${esc(k.author)} · ${esc(k.time)}</div>
+    <div style="white-space:pre-wrap;line-height:1.9;font-size:14px">${esc(k.content)}</div>
+  `,onOk:()=>{}});
+}
+function kbForm(){
+  showModal({title:'新增知识文档',okText:'发布',body:`
+    <div class="field"><label>文档标题</label><input id="kbTitle"></div>
+    <div class="field"><label>分类</label>
+      <select id="kbCat">
+        <option value="技能">技能</option>
+        <option value="模板">模板</option>
+        <option value="流程">流程</option>
+        <option value="其他">其他</option>
+      </select>
+    </div>
+    <div class="field"><label>正文内容</label><textarea id="kbContent" style="min-height:170px"></textarea></div>
+  `,onOk:()=>{
+    const title=$('#kbTitle').value.trim();
+    if(!title){ showToast('请填写文档标题'); return false; }
+    DB.knowledge.unshift({id:uid(),title,category:$('#kbCat').value,
+      author:SESSION.name,time:nowStr().slice(0,10),content:$('#kbContent').value.trim()});
+    refresh();
+  }});
+}
+
+/* ================= 物资统计 ================= */
+function pageSupplies(){
+  if(!canManageSupplies()) return empty('你暂无物资管理权限，请联系部长或管理员授权。');
+  return `
+  <div class="page-head">
+    <div><h2>物资统计</h2></div>
+    ${isManager()?`<button class="btn primary" onclick="supplyForm()">+ 新增物资</button>`:''}
+  </div>
+  <div class="card">
+    <div class="table-wrap"><table>
+      <thead><tr><th>物资名称</th><th>分类</th><th>总数</th><th>可用</th><th>库存</th><th>操作</th></tr></thead>
+      <tbody>${DB.supplies.map(s=>{
+        const p=s.total?Math.round(s.available/s.total*100):0;
+        return `<tr>
+          <td><b>${esc(s.name)}</b></td>
+          <td>${esc(s.category)}</td>
+          <td>${s.total} ${esc(s.unit)}</td>
+          <td><b>${s.available}</b> ${esc(s.unit)}</td>
+          <td style="min-width:120px"><div class="bar"><i style="width:${p}%"></i></div>
+            <div class="muted sm" style="margin-top:4px">${p}%</div></td>
+          <td class="nowrap">
+            <button class="btn ghost sm" onclick="supplyMove('${s.id}',-1)">借出</button>
+            <button class="btn ghost sm" onclick="supplyMove('${s.id}',1)">归还</button>
+            ${isManager()?`<button class="btn ghost sm danger" onclick="delRow('supplies','${s.id}')">删</button>`:''}
+          </td>
+        </tr>`;
+      }).join('')||`<tr><td colspan="6">${empty('暂无物资')}</td></tr>`}</tbody>
+    </table></div>
+  </div>`;
+}
+function supplyForm(){
+  showModal({title:'新增物资',okText:'添加',body:`
+    <div class="field"><label>物资名称</label><input id="suName"></div>
+    <div class="row gap" style="align-items:flex-end">
+      <div class="field" style="flex:1"><label>分类</label><input id="suCat" value="器材"></div>
+      <div class="field" style="width:110px"><label>单位</label><input id="suUnit" value="件"></div>
+    </div>
+    <div class="row gap" style="align-items:flex-end">
+      <div class="field" style="flex:1"><label>总数量</label><input id="suTotal" type="number" value="1"></div>
+      <div class="field" style="flex:1"><label>可用数量</label><input id="suAvail" type="number" value="1"></div>
+    </div>
+  `,onOk:()=>{
+    const name=$('#suName').value.trim();
+    if(!name){ showToast('请填写物资名称'); return false; }
+    const total=Number($('#suTotal').value)||0;
+    DB.supplies.unshift({id:uid(),name,category:$('#suCat').value.trim()||'其他',
+      unit:$('#suUnit').value.trim()||'件',total,available:Math.min(total,Number($('#suAvail').value)||0)});
+    refresh();
+  }});
+}
+function supplyMove(id,delta){
+  const s=DB.supplies.find(x=>x.id===id); if(!s) return;
+  const next=s.available+delta;
+  if(next<0){ showToast('可用数量不足'); return; }
+  if(next>s.total){ showToast('归还超出总数'); return; }
+  s.available=next; refresh();
+}
+
+/* ================= 排班与课表 ================= */
+function pageSchedule(){
+  const isMgr = isManager();
+  return `
+  <div class="page-head">
+    <div><h2>排班与课表</h2><p class="muted">部门内部可见。成员录入课表，部长可根据空闲时间排班。</p></div>
+  </div>
+  <div class="tabs">
+    ${isMgr ? `
+      <button class="tab active" id="tab-query" onclick="switchSchTab('query')">空闲查询与排班</button>
+      <button class="tab" id="tab-sch" onclick="switchSchTab('sch')">排班列表</button>
+    ` : `
+      <button class="tab active" id="tab-tt" onclick="switchSchTab('tt')">我的课表</button>
+      <button class="tab" id="tab-sch" onclick="switchSchTab('sch')">我的排班</button>
+    `}
+  </div>
+  <div id="sch-content">${isMgr ? renderQuery() : renderTimetable()}</div>`;
+}
+
+function switchSchTab(t){
+  document.querySelectorAll('.tabs .tab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  const c = document.getElementById('sch-content');
+  if(t==='query') c.innerHTML = renderQuery();
+  else if(t==='tt') c.innerHTML = renderTimetable();
+  else c.innerHTML = renderSchList();
+}
+
+function renderQuery(){
+  return `
+  <div class="card" style="margin-bottom:20px">
+    <h3 style="margin-bottom:14px">🔍 查本部门空闲人员</h3>
+    <div class="row gap" style="align-items:flex-end; margin-bottom:16px">
+      <div class="field" style="margin:0; flex:1"><label>选择星期</label>
+        <select id="qWeek">${WEEKS.map(w=>`<option>${w}</option>`).join('')}</select></div>
+      <div class="field" style="margin:0; flex:1"><label>选择时间段</label>
+        <select id="qPart">${DAY_PARTS.map(p=>`<option>${p}</option>`).join('')}</select></div>
+      <button class="btn primary" onclick="doQuery()">查询空闲</button>
+    </div>
+    <div id="queryResult"></div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h3>已排班次</h3>
+      <button class="btn primary sm" onclick="scheduleForm()">+ 新增排班</button></div>
+    ${renderSchList(true)}
+  </div>`;
+}
+
+function doQuery(){
+  const w=$('#qWeek').value, p=$('#qPart').value;
+  const slot = w+'-'+p;
+  const myDeptUsers = DB.users.filter(u=>u.dept===SESSION.dept && u.role!=='admin' && u.name!==SESSION.name);
+  const available = [], busy = [], noData = [];
+  
+  myDeptUsers.forEach(u=>{
+    const tt = DB.timetables.find(t=>t.user===u.name);
+    if(!tt){ noData.push(u); }
+    else if(tt.busySlots.includes(slot)){ busy.push(u); }
+    else { available.push(u); }
+  });
+
+  let html = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">`;
+  html += `<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:16px">
+    <h4 style="color:#15803d;margin-bottom:10px">🟢 空闲 (${available.length})</h4>
+    ${available.length?available.map(u=>`<span class="chip" style="margin:4px">${esc(u.name)}</span>`).join(''):'<div class="sm muted">无</div>'}
+  </div>`;
+  
+  html += `<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:16px">
+    <h4 style="color:#b91c1c;margin-bottom:10px">🔴 有课 (${busy.length})</h4>
+    ${busy.length?busy.map(u=>`<span class="chip" style="margin:4px;background:#fee2e2;color:#b91c1c">${esc(u.name)}</span>`).join(''):'<div class="sm muted">无</div>'}
+  </div>`;
+  
+  if(noData.length){
+    html += `<div style="grid-column:span 2;background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:16px">
+      <h4 style="color:var(--muted);margin-bottom:10px">⚪ 未录入课表 (${noData.length})</h4>
+      ${noData.map(u=>`<span class="chip" style="margin:4px;background:#f1f5f9;color:#64748b">${esc(u.name)}</span>`).join('')}
+    </div>`;
+  }
+  html += `</div>`;
+  
+  html += `<div style="margin-top:16px;text-align:right">
+    <button class="btn primary" onclick="scheduleForm('${w}','${p}','${available.map(u=>u.name).join(',')}')">使用空闲人员排班</button>
+  </div>`;
+
+  $('#queryResult').innerHTML = html;
+}
+
+function renderTimetable(){
+  const tt = DB.timetables.find(t=>t.user===SESSION.name) || {busySlots:[]};
+  let html = `<div class="card">
+    <div class="row between" style="margin-bottom:14px">
+      <h3>我的课表（点击格子标记“有课”）</h3>
+      <button class="btn primary sm" onclick="saveTimetable()">保存课表</button>
+    </div>
+    <div class="tt-grid">
+      <div class="tt-cell header"></div>
+      ${WEEKS.map(w=>`<div class="tt-cell header">${w}</div>`).join('')}
+      ${DAY_PARTS.map(p=>`
+        <div class="tt-cell header">${p}</div>
+        ${WEEKS.map(w=>{
+          const isBusy = tt.busySlots.includes(w+'-'+p);
+          return `<div class="tt-cell ${isBusy?'busy':'free'}" data-slot="${w}-${p}" onclick="toggleSlot(this)">${isBusy?'有课':'空闲'}</div>`;
+        }).join('')}
+      `).join('')}
+    </div>
+    <p class="muted sm" style="margin-top:14px">提示：如果某时段有课或有事，请点击将其标记为“有课/忙碌”，部长排班时会自动避开这些时间。</p>
+  </div>`;
+  return html;
+}
+
+function toggleSlot(el){
+  const slot = el.dataset.slot;
+  if(el.classList.contains('busy')) {
+    el.classList.remove('busy'); el.classList.add('free'); el.textContent = '空闲';
+  } else {
+    el.classList.add('busy'); el.classList.remove('free'); el.textContent = '有课';
+  }
+}
+
+function saveTimetable(){
+  const slots = [];
+  document.querySelectorAll('.tt-cell.busy').forEach(el=>slots.push(el.dataset.slot));
+  const existing = DB.timetables.find(t=>t.user===SESSION.name);
+  if(existing) { existing.busySlots = slots; }
+  else { DB.timetables.push({user:SESSION.name, dept:SESSION.dept, busySlots:slots}); }
+  save(); showToast('课表已保存！');
+}
+
+function renderSchList(inCard=false){
+  const schs = DB.schedules.filter(s=>s.dept===SESSION.dept).sort((a,b)=>a.date.localeCompare(b.date));
+  if(!schs.length) return empty('暂无排班');
+  const groups = {};
+  schs.forEach(s=>{ (groups[s.date]=groups[s.date]||[]).push(s); });
+  
+  let html = '';
+  for(let d in groups){
+    html += `<div style="margin-bottom:20px">
+      <div class="row between" style="margin-bottom:10px"><h3>📅 ${esc(d)}</h3></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>班次时间</th><th>人员</th><th>地点</th><th>备注</th><th>操作</th></tr></thead>
+        <tbody>${groups[d].map(s=>`<tr>
+          <td><b>${esc(s.shift)}</b></td>
+          <td>${s.members.map(m=>`<span class="chip">${esc(m)}</span>`).join('')}</td>
+          <td>${esc(s.place||'—')}</td>
+          <td class="sm muted">${esc(s.note||'—')}</td>
+          <td><button class="btn ghost sm danger" onclick="delRow('schedules','${s.id}')">删</button></td>
+        </tr>`).join('')}</tbody>
+      </table></div>
+    </div>`;
+  }
+  return html;
+}
+
+function scheduleForm(defW='', defP='', defMembers=''){
+  let defaultShift = defW ? defW : '';
+  let defaultTime = defP ? defP : '';
+  
+  showModal({title:'新增排班',okText:'添加',body:`
+    <div class="field"><label>日期</label><input id="shDate" type="date"></div>
+    
+    <div class="field">
+      <label>班次时间段</label>
+      <select id="shShift" style="margin-bottom:8px">
+        ${SHIFT_OPTIONS.map(opt=>`<option value="${opt}">${opt}</option>`).join('')}
+        <option value="custom">自定义输入...</option>
+      </select>
+      <input id="shCustomShift" placeholder="例如：08:30 - 11:30" style="display:none">
+    </div>
+
+    <div class="field"><label>值班人员（逗号分隔）</label><input id="shMembers" value="${defMembers}" placeholder="干事甲,干事乙"></div>
+    <div class="field"><label>地点</label><input id="shPlace" value="办公室"></div>
+    <div class="field"><label>备注</label><input id="shNote" placeholder="选填"></div>
+  `,onOk:()=>{
+    const date=$('#shDate').value;
+    const selectVal = $('#shShift').value;
+    const customVal = $('#shCustomShift').value.trim();
+    const shift = selectVal === 'custom' ? customVal : selectVal;
+    
+    if(!date||!shift){ showToast('请填写日期与班次时间'); return false; }
+    
+    const finalShift = defW ? `${defW} ${shift}` : shift;
+    
+    DB.schedules.push({id:uid(),dept:SESSION.dept,date,shift:finalShift,
+      members:$('#shMembers').value.split(/[,，]/).map(s=>s.trim()).filter(Boolean),
+      place:$('#shPlace').value.trim(),note:$('#shNote').value.trim()});
+    DB.schedules.sort((a,b)=>a.date.localeCompare(b.date));
+    refresh();
+  }});
+  
+  setTimeout(() => {
+    const sel = document.getElementById('shShift');
+    const custom = document.getElementById('shCustomShift');
+    if(sel && custom) {
+      sel.addEventListener('change', () => {
+        if(sel.value === 'custom') {
+          custom.style.display = 'block';
+          custom.focus();
+        } else {
+          custom.style.display = 'none';
+        }
+      });
+    }
+  }, 50);
+}
+
+/* ================= 成员与权限管理（仅管理员） ================= */
+function pageAdminUsers(){
+  if(!isAdmin()) return empty('无权限');
+  return `
+  <div class="page-head">
+    <div><h2>成员与权限管理</h2><p class="muted">仅管理员可见。用于账号管理和权限分配。</p></div>
+    <button class="btn primary" onclick="userForm()">+ 新增成员</button>
+  </div>
+  <div class="card">
+    <div class="table-wrap"><table>
+      <thead><tr><th>姓名</th><th>账号</th><th>部门</th><th>角色</th><th>物资权限</th><th>操作</th></tr></thead>
+      <tbody>${DB.users.map(u=>`<tr>
+        <td><b>${esc(u.name)}</b></td>
+        <td class="sm">${esc(u.username)}</td>
+        <td><span class="badge gray">${esc(u.dept)}</span></td>
+        <td>
+          <span class="badge ${u.role==='admin'?'red':u.role==='leader'?'amber':'blue'}">
+            ${u.role==='admin'?'管理员':u.role==='leader'?'部长':'干事'}
+          </span>
+        </td>
+        <td>
+          ${u.role==='member'?`
+            <label class="switch">
+              <input type="checkbox" ${u.canManageSupplies?'checked':''} onchange="toggleSupplyPermission('${u.username}')">
+              <span class="slider"></span>
+            </label>
+          `:`<span class="sm muted">（默认拥有）</span>`}
+        </td>
+        <td class="nowrap">
+          <button class="btn ghost sm" onclick="resetPwd('${u.username}')">重置密码</button>
+          ${u.username!=='admin'?`<button class="btn ghost sm danger" onclick="delUser('${u.username}')">删除</button>`:''}
+        </td>
+      </tr>`).join('')}</tbody>
+    </table></div>
+  </div>`;
+}
+
+function userForm(){
+  showModal({title:'新增成员',okText:'创建',body:`
+    <div class="row gap" style="align-items:flex-end">
+      <div class="field" style="flex:1"><label>姓名</label><input id="uName"></div>
+      <div class="field" style="flex:1"><label>登录账号</label><input id="uUsername" placeholder="拼音或学号"></div>
+    </div>
+    <div class="row gap" style="align-items:flex-end">
+      <div class="field" style="flex:1"><label>部门</label>
+        <select id="uDept">${DEPTS.map(d=>`<option>${d}</option>`).join('')}</select></div>
+      <div class="field" style="flex:1"><label>角色</label>
+        <select id="uRole">
+          <option value="member">干事</option>
+          <option value="leader">部长</option>
+          <option value="admin">管理员</option>
+        </select></div>
+    </div>
+    <div class="field"><label>初始密码</label><input id="uPwd" value="123456"></div>
+  `,onOk:()=>{
+    const name=$('#uName').value.trim();
+    const username=$('#uUsername').value.trim();
+    if(!name||!username){ showToast('姓名和账号必填'); return false; }
+    if(DB.users.some(u=>u.username===username)){ showToast('账号已存在'); return false; }
+    DB.users.push({
+      username, password:$('#uPwd').value.trim()||'123456', name,
+      dept:$('#uDept').value, role:$('#uRole').value, canManageSupplies:false
+    });
+    refresh();
+  }});
+}
+
+function resetPwd(username){
+  if(!confirm('确定将该成员的密码重置为 123456 吗？')) return;
+  const u=DB.users.find(x=>x.username===username);
+  if(u){ u.password='123456'; save(); showToast('密码已重置为 123456'); }
+}
+
+function toggleSupplyPermission(username){
+  const u=DB.users.find(x=>x.username===username);
+  if(u){ u.canManageSupplies=!u.canManageSupplies; save(); }
+}
+
+function delUser(username){
+  if(!confirm('确定删除该成员吗？此操作不可撤销。')) return;
+  DB.users=DB.users.filter(x=>x.username!==username);
+  refresh();
+}
+
+/* ================= 通用删除 ================= */
+function delRow(coll,id){
+  if(!confirm('确定删除该记录吗？')) return;
+  DB[coll]=DB[coll].filter(x=>x.id!==id);
+  refresh();
+}
+
+
+/* ================= AI 助手核心逻辑 ================= */
+
+function appendMsg(text, isUser) {
+  const body = document.getElementById('ai-chat-body');
+  const div = document.createElement('div');
+  div.className = `msg ${isUser ? 'user' : 'ai'}`;
+  div.innerHTML = text;
+  body.appendChild(div);
+  body.scrollTop = body.scrollHeight;
+}
+
+async function sendToAI() {
+  const input = document.getElementById('ai-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  appendMsg(text, true);
+
+  const body = document.getElementById('ai-chat-body');
+  const loadingDiv = document.createElement('div');
+  loadingDiv.className = 'msg ai';
+  loadingDiv.id = 'ai-loading';
+  loadingDiv.innerText = '思考中...';
+  body.appendChild(loadingDiv);
+  body.scrollTop = body.scrollHeight;
+
+  try {
+    // 调用真实 API
+    const aiResult = await callRealAPI(text);
+    
+    document.getElementById('ai-loading').remove();
+
+    // ================= 核心分发逻辑 =================
+    if (aiResult.action === 'create_task') {
+      DB.tasks.unshift({
+        id: uid(), title: aiResult.data.title, desc: aiResult.data.desc || '由 AI 创建',
+        assignee: aiResult.data.assignee, dept: SESSION.dept, 
+        deadline: aiResult.data.deadline, priority: aiResult.data.priority || '中',
+        status: '待办', progress: 0, createdBy: SESSION.name
+      });
+      save();
+      appendMsg(`✅ 已为您创建任务【${aiResult.data.title}】，指派给 ${aiResult.data.assignee}。`, false);
+      if (CURRENT === 'tasks' || CURRENT === 'dashboard') renderApp();
+
+    } else if (aiResult.action === 'query_supply') {
+      const itemName = aiResult.data.item_name;
+      const items = DB.supplies.filter(s => s.name.includes(itemName));
+      if (items.length > 0) {
+        let reply = `📦 查到了相关物资：<br>`;
+        items.forEach(i => {
+          reply += `• <b>${i.name}</b>：可用 ${i.available} ${i.unit}。<br>`;
+        });
+        appendMsg(reply, false);
+      } else {
+        appendMsg(`📦 抱歉，没找到包含“${itemName}”的物资。`, false);
+      }
+
+    } else if (aiResult.action === 'score_member') {
+      DB.scores.unshift({
+        id: uid(), target: aiResult.data.target, dept: SESSION.dept,
+        month: new Date().toISOString().slice(0, 7),
+        attitude: aiResult.data.attitude || 85, execution: aiResult.data.execution || 85,
+        teamwork: aiResult.data.teamwork || 85, innovation: aiResult.data.innovation || 85,
+        discipline: aiResult.data.discipline || 85,
+        comment: aiResult.data.comment || 'AI 自动生成', scorer: SESSION.name, time: nowStr()
+      });
+      save();
+      appendMsg(`📝 已为 ${aiResult.data.target} 生成初步评分。`, false);
+      if (CURRENT === 'tasks') renderApp();
+
+    } 
+    // 👇 新增逻辑 1：查询知识库
+    else if (aiResult.action === 'query_knowledge') {
+      const keyword = aiResult.data.keyword.toLowerCase();
+      const docs = DB.knowledge.filter(k => 
+        k.title.toLowerCase().includes(keyword) || 
+        k.content.toLowerCase().includes(keyword) ||
+        k.category.toLowerCase().includes(keyword)
+      );
+      
+      if (docs.length > 0) {
+        let reply = `📚 为您在知识库找到以下相关内容：<br>`;
+        docs.slice(0, 3).forEach((doc, index) => {
+          reply += `<b>${index + 1}. ${doc.title}</b> [${doc.category}]<br>`;
+          const snippet = doc.content.length > 50 ? doc.content.slice(0, 50) + '...' : doc.content;
+          reply += `<span style="color:var(--muted);font-size:12px">${snippet}</span><br><br>`;
+        });
+        if (docs.length > 3) reply += `（还有更多结果，请前往知识库查看）`;
+        appendMsg(reply, false);
+      } else {
+        appendMsg(`📚 抱歉，知识库里暂时没有关于“${aiResult.data.keyword}”的内容。`, false);
+      }
+    }
+    // 👇 新增逻辑 2：写入知识库
+    else if (aiResult.action === 'add_knowledge') {
+      DB.knowledge.unshift({
+        id: uid(),
+        title: aiResult.data.title,
+        category: aiResult.data.category || '其他',
+        content: aiResult.data.content,
+        author: SESSION.name,
+        time: nowStr().slice(0, 10)
+      });
+      save();
+      appendMsg(`📚 已将新知识【${aiResult.data.title}】成功存入知识库！`, false);
+      if (CURRENT === 'knowledge') renderApp();
+    }
+    
+    else {
+      // 兜底聊天
+      appendMsg(aiResult.data.reply || '我不太明白你的意思。', false);
+    }
+
+  } catch (error) {
+    document.getElementById('ai-loading').remove();
+    appendMsg('公开演示版尚未配置安全的 AI 后端，智能助手暂不可用；其余本地演示功能可继续体验。', false);
+    console.error(error);
+  }
+}
+
+async function callRealAPI(userText) {
+  throw new Error("公开演示版暂未配置安全的 AI 后端。");
+}
+
+/* ================= 启动 ================= */(function init(){
+  load();
+  try{ SESSION=JSON.parse(sessionStorage.getItem(SKEY)||'null'); }catch(e){ SESSION=null; }
+  if(SESSION){
+    const u=DB.users.find(x=>x.username===SESSION.username);
+    SESSION = u || null;
+  }
+  if(SESSION) renderApp(); else renderLogin();
+})();
+</script>
+</body>
+</html>
